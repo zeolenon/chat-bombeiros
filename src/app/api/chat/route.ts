@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GeminiService } from "@/lib/geminiService";
+import { AIService } from "@/lib/aiService";
 import pool from "@/lib/database";
 
 export async function POST(request: NextRequest) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const geminiService = new GeminiService();
+    const aiService = new AIService();
     const client = await pool.connect();
 
     try {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
       // Buscar chunks relevantes
       console.log("Buscando chunks relevantes...");
-      const relevantChunks = await geminiService.getRelevantChunks(question);
+      const relevantChunks = await aiService.getRelevantChunks(question);
       console.log("Chunks encontrados:", relevantChunks.length);
 
       if (relevantChunks.length > 0) {
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
       // Gerar resposta
       console.log("Gerando resposta...");
-      const response = await geminiService.generateResponse(
+      const response = await aiService.generateResponse(
         question,
         chatHistory,
         relevantChunks

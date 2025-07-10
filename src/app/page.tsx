@@ -12,6 +12,7 @@ import {
 import FileUpload from "@/components/FileUpload";
 import DocumentManager from "@/components/DocumentManager";
 import ContextSettings from "@/components/ContextSettings";
+import AIModelSettings from "@/components/AIModelSettings";
 import SimpleChat from "@/components/SimpleChat";
 
 type TabType = "chat" | "documents" | "settings";
@@ -131,8 +132,20 @@ export default function Home() {
         )}
 
         {activeTab === "settings" && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <ContextSettings />
+          <div className="space-y-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Configurações de Contexto
+              </h2>
+              <ContextSettings />
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Configurações de Modelos de IA
+              </h2>
+              <AIModelSettings />
+            </div>
           </div>
         )}
       </main>

@@ -60,7 +60,21 @@ export async function initializeDatabase() {
       )
     `);
 
-    // Inserir configuração padrão
+    // Tabela de configurações de modelos de IA
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ai_model_configs (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        provider VARCHAR(100) NOT NULL,
+        model VARCHAR(100) NOT NULL,
+        api_key TEXT,
+        base_url TEXT,
+        is_active BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Inserir configuração padrão de contexto
     await client.query(`
       INSERT INTO context_settings (name, description, prompt_template) 
       VALUES (
@@ -68,6 +82,16 @@ export async function initializeDatabase() {
         'Configuração padrão para análise de normas do CBM-RN',
         'Você é um especialista em normas e resoluções do Corpo de Bombeiros Militar do Rio Grande do Norte (CBM-RN). Sua função é analisar, vistoriar e fiscalizar edificações e eventos seguindo rigorosamente as normas estabelecidas. Sempre baseie suas respostas nas normas e resoluções fornecidas, citando especificamente os trechos relevantes. Seja preciso, técnico e fundamentado em suas análises.'
       ) ON CONFLICT DO NOTHING
+    `);
+
+    // Inserir modelos de IA padrão
+    await client.query(`
+      INSERT INTO ai_model_configs (name, provider, model, is_active) 
+      VALUES 
+        ('Gemini 1.5 Pro', 'Google', 'gemini-1.5-pro', true),
+        ('Gemini 1.5 Flash', 'Google', 'gemini-1.5-flash', false),
+        ('Grok Beta', 'xAI', 'grok-beta', false)
+      ON CONFLICT DO NOTHING
     `);
   } finally {
     client.release();

@@ -12,7 +12,7 @@ import {
 import FileUpload from "@/components/FileUpload";
 import DocumentManager from "@/components/DocumentManager";
 import ContextSettings from "@/components/ContextSettings";
-import HybridAssistant from "@/components/HybridAssistant";
+import SimpleChat from "@/components/SimpleChat";
 
 type TabType = "chat" | "documents" | "settings";
 
@@ -25,7 +25,7 @@ export default function Home() {
   };
 
   const startNewChat = () => {
-    // Para o assistant-ui, um novo chat é iniciado automaticamente
+    // Para o SimpleChat, um novo chat é iniciado automaticamente
     // quando não há chatId ativo
     window.location.reload();
   };
@@ -106,7 +106,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "chat" && (
           <div className="h-[calc(100vh-200px)]">
-            <HybridAssistant />
+            <SimpleChat />
           </div>
         )}
 

@@ -231,7 +231,7 @@ const AssistantMessage: FC = () => {
         <div className="flex items-start space-x-2">
           <Shield className="h-5 w-5 mt-1 flex-shrink-0 text-red-600" />
           <div className="flex-1">
-            <MarkdownText />
+            <MessagePrimitive.Content />
           </div>
         </div>
       </div>

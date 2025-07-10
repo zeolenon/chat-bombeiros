@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { Thread } from "@/components/assistant-ui/thread";
@@ -8,6 +8,29 @@ import CustomThreadList from "./CustomThreadList";
 
 export default function HybridAssistant() {
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+
+  // Carregar mensagens quando uma thread é selecionada
+  const loadMessages = async (threadId: string) => {
+    try {
+      const response = await fetch(`/api/chat?chatId=${threadId}`);
+      const data = await response.json();
+
+      if (response.ok && data.messages) {
+        setMessages(data.messages);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar mensagens:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentThreadId) {
+      loadMessages(currentThreadId);
+    } else {
+      setMessages([]);
+    }
+  }, [currentThreadId]);
 
   const runtime = useChatRuntime({
     api: "/api/chat",

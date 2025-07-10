@@ -5,6 +5,13 @@ import { PDFProcessor } from "@/lib/pdfProcessor";
 import pool from "@/lib/database";
 import { insertChunks } from "@/lib/milvus";
 
+// Configuração para upload de arquivos grandes
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 // Função para garantir que a pasta uploads existe e tem permissões
 async function ensureUploadsDirectory() {
   const uploadDir = join(process.cwd(), "uploads");
@@ -46,6 +53,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Apenas arquivos PDF são aceitos" },
         { status: 400 }
+      );
+    }
+
+    // Verificar tamanho do arquivo (máximo 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      console.log(`ERRO: Arquivo muito grande (${file.size} bytes)`);
+      return NextResponse.json(
+        { error: "Arquivo muito grande. Tamanho máximo: 50MB" },
+        { status: 413 }
       );
     }
 

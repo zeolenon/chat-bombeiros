@@ -12,6 +12,13 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
+  // Configurações para upload de arquivos grandes
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+    responseLimit: '50mb',
+  },
 }
 
 module.exports = nextConfig 

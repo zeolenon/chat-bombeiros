@@ -13,6 +13,10 @@ export async function checkMilvusConnection() {
   try {
     console.log("Verificando conexão com Milvus...");
     console.log(`Tentando conectar em: ${MILVUS_ADDRESS}`);
+
+    // Aguardar um pouco antes de tentar conectar
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     await milvus.showCollections();
     console.log("✓ Conexão com Milvus estabelecida");
     return true;
@@ -36,6 +40,13 @@ export async function checkMilvusConnection() {
         console.error(
           "  - Reinicie o container se necessário: docker-compose restart milvus"
         );
+      } else if (errorCode === 14) {
+        console.error("✗ Erro UNAVAILABLE: Milvus não está disponível");
+        console.error(
+          "  - O container do Milvus pode não estar inicializado completamente"
+        );
+        console.error("  - Aguarde alguns minutos e tente novamente");
+        console.error("  - Verifique os logs: docker logs milvus");
       }
     }
 

@@ -105,8 +105,8 @@ export default function AIModelSettings() {
           name: model.name,
           provider: model.provider,
           model: model.model,
-          apiKey: model.api_key,
-          baseUrl: model.base_url,
+          apiKey: model.api_key || "",
+          baseUrl: model.base_url || "",
           isActive: model.is_active,
         }),
       });
@@ -114,6 +114,9 @@ export default function AIModelSettings() {
       if (response.ok) {
         setEditingId(null);
         loadModels();
+      } else {
+        const errorData = await response.json();
+        console.error("Erro na resposta:", errorData);
       }
     } catch (error) {
       console.error("Erro ao atualizar modelo:", error);
@@ -134,6 +137,11 @@ export default function AIModelSettings() {
     } catch (error) {
       console.error("Erro ao remover modelo:", error);
     }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    loadModels(); // Recarregar para restaurar os dados originais
   };
 
   const handleToggleActive = async (id: number) => {
@@ -322,68 +330,197 @@ export default function AIModelSettings() {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h4 className="text-lg font-medium text-gray-900">
-                    {model.name}
-                  </h4>
-                  {model.is_active && (
-                    <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                      Ativo
-                    </span>
-                  )}
-                </div>
+                {editingId === model.id ? (
+                  // Formulário de edição
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-medium text-gray-900">
+                        Editando {model.name}
+                      </h4>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleUpdate(model.id)}
+                          className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          <Save className="h-4 w-4" />
+                          <span>Salvar</span>
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="flex items-center space-x-1 px-3 py-1 text-gray-600 hover:text-gray-800"
+                        >
+                          <X className="h-4 w-4" />
+                          <span>Cancelar</span>
+                        </button>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      <strong>Provedor:</strong> {model.provider}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <strong>Modelo:</strong> {model.model}
-                    </p>
-                  </div>
-                  <div>
-                    {model.api_key && (
-                      <p className="text-sm text-gray-600">
-                        <Key className="h-4 w-4 inline mr-1" />
-                        API Key configurada
-                      </p>
-                    )}
-                    {model.base_url && (
-                      <p className="text-sm text-gray-600">
-                        <Globe className="h-4 w-4 inline mr-1" />
-                        URL Base configurada
-                      </p>
-                    )}
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nome
+                        </label>
+                        <input
+                          type="text"
+                          value={model.name}
+                          onChange={(e) => {
+                            const updatedModels = models.map((m) =>
+                              m.id === model.id
+                                ? { ...m, name: e.target.value }
+                                : m
+                            );
+                            setModels(updatedModels);
+                          }}
+                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
 
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleToggleActive(model.id)}
-                    className={`px-3 py-1 text-sm rounded ${
-                      model.is_active
-                        ? "bg-red-600 text-white hover:bg-red-700"
-                        : "bg-green-600 text-white hover:bg-green-700"
-                    }`}
-                  >
-                    {model.is_active ? "Desativar" : "Ativar"}
-                  </button>
-                  <button
-                    onClick={() => setEditingId(model.id)}
-                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-700"
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>Editar</span>
-                  </button>
-                  <button
-                    onClick={() => handleDelete(model.id)}
-                    className="flex items-center space-x-1 text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Remover</span>
-                  </button>
-                </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Provedor
+                        </label>
+                        <input
+                          type="text"
+                          value={model.provider}
+                          onChange={(e) => {
+                            const updatedModels = models.map((m) =>
+                              m.id === model.id
+                                ? { ...m, provider: e.target.value }
+                                : m
+                            );
+                            setModels(updatedModels);
+                          }}
+                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Modelo
+                        </label>
+                        <input
+                          type="text"
+                          value={model.model}
+                          onChange={(e) => {
+                            const updatedModels = models.map((m) =>
+                              m.id === model.id
+                                ? { ...m, model: e.target.value }
+                                : m
+                            );
+                            setModels(updatedModels);
+                          }}
+                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          API Key
+                        </label>
+                        <input
+                          type="password"
+                          value={model.api_key || ""}
+                          onChange={(e) => {
+                            const updatedModels = models.map((m) =>
+                              m.id === model.id
+                                ? { ...m, api_key: e.target.value }
+                                : m
+                            );
+                            setModels(updatedModels);
+                          }}
+                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                          placeholder="Deixe vazio para usar variável de ambiente"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          URL Base
+                        </label>
+                        <input
+                          type="url"
+                          value={model.base_url || ""}
+                          onChange={(e) => {
+                            const updatedModels = models.map((m) =>
+                              m.id === model.id
+                                ? { ...m, base_url: e.target.value }
+                                : m
+                            );
+                            setModels(updatedModels);
+                          }}
+                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                          placeholder="Deixe vazio para usar padrão"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Visualização normal
+                  <>
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h4 className="text-lg font-medium text-gray-900">
+                        {model.name}
+                      </h4>
+                      {model.is_active && (
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                          Ativo
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          <strong>Provedor:</strong> {model.provider}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <strong>Modelo:</strong> {model.model}
+                        </p>
+                      </div>
+                      <div>
+                        {model.api_key && (
+                          <p className="text-sm text-gray-600">
+                            <Key className="h-4 w-4 inline mr-1" />
+                            API Key configurada
+                          </p>
+                        )}
+                        {model.base_url && (
+                          <p className="text-sm text-gray-600">
+                            <Globe className="h-4 w-4 inline mr-1" />
+                            URL Base configurada
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleToggleActive(model.id)}
+                        className={`px-3 py-1 text-sm rounded ${
+                          model.is_active
+                            ? "bg-red-600 text-white hover:bg-red-700"
+                            : "bg-green-600 text-white hover:bg-green-700"
+                        }`}
+                      >
+                        {model.is_active ? "Desativar" : "Ativar"}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(model.id)}
+                        className="flex items-center space-x-1 text-blue-600 hover:text-blue-700"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span>Editar</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(model.id)}
+                        className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Remover</span>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

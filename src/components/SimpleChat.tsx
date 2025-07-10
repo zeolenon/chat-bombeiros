@@ -37,6 +37,7 @@ export default function SimpleChat() {
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Carregar mensagens quando uma thread é selecionada
   const loadMessages = async (threadId: string) => {
@@ -184,6 +185,8 @@ export default function SimpleChat() {
         const data = await response.json();
         setChatInfo(data.chat);
         setIsEditingTitle(false);
+        // Atualizar a lista de chats
+        setRefreshTrigger((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Erro ao atualizar título:", error);
@@ -217,6 +220,7 @@ export default function SimpleChat() {
         <CustomThreadList
           onThreadSelect={setCurrentThreadId}
           currentThreadId={currentThreadId}
+          refreshTrigger={refreshTrigger}
         />
       </div>
 

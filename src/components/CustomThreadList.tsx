@@ -14,11 +14,13 @@ interface Thread {
 interface CustomThreadListProps {
   onThreadSelect: (threadId: string | null) => void;
   currentThreadId: string | null;
+  refreshTrigger?: number;
 }
 
 export default function CustomThreadList({
   onThreadSelect,
   currentThreadId,
+  refreshTrigger = 0,
 }: CustomThreadListProps) {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,11 +28,11 @@ export default function CustomThreadList({
   // Carregar threads
   const loadThreads = async () => {
     try {
-      const response = await fetch("/api/threads");
+      const response = await fetch("/api/chat");
       const data = await response.json();
 
       if (response.ok) {
-        setThreads(data.threads);
+        setThreads(data.chats || []);
       }
     } catch (error) {
       console.error("Erro ao carregar threads:", error);
@@ -42,19 +44,20 @@ export default function CustomThreadList({
   // Criar nova thread
   const createNewThread = async () => {
     try {
-      const response = await fetch("/api/threads", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title: "Nova conversa" }),
+        body: JSON.stringify({ question: "Nova conversa" }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        setThreads((prev) => [data, ...prev]);
-        onThreadSelect(data.id);
+      if (response.ok && data.length > 0) {
+        // Recarregar a lista completa
+        loadThreads();
+        onThreadSelect(data[0].id);
       }
     } catch (error) {
       console.error("Erro ao criar thread:", error);
@@ -64,7 +67,7 @@ export default function CustomThreadList({
   // Deletar thread
   const deleteThread = async (threadId: string) => {
     try {
-      const response = await fetch(`/api/threads?id=${threadId}`, {
+      const response = await fetch(`/api/chat?chatId=${threadId}`, {
         method: "DELETE",
       });
 
@@ -81,7 +84,7 @@ export default function CustomThreadList({
 
   useEffect(() => {
     loadThreads();
-  }, []);
+  }, [refreshTrigger]);
 
   if (loading) {
     return (
@@ -148,7 +151,7 @@ export default function CustomThreadList({
         <div className="text-center text-gray-500 py-8">
           <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-400" />
           <p className="text-sm">Nenhuma conversa ainda</p>
-          <p className="text-xs">Clique em "Nova Conversa" para começar</p>
+          <p className="text-xs">Clique em Nova Conversa para começar</p>
         </div>
       )}
     </div>

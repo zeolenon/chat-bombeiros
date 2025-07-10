@@ -1,4 +1,4 @@
-# Solução para Problemas de Upload e Milvus
+# Solução para Problemas de Upload e Qdrant
 
 ## Problemas Identificados
 
@@ -12,112 +12,50 @@
 - Adicionado verificação de tamanho no código (máximo 50MB)
 - Configurado `bodyParser: false` na rota de upload
 
-### 2. Erro de Conexão com Milvus (UNAVAILABLE)
+### 2. Migração para Qdrant
 
-**Problema**: O Milvus não está respondendo corretamente na porta 19530.
+**Problema**: Milvus não funcionava adequadamente em sistemas com pouca RAM.
 
-**Soluções Aplicadas**:
+**Solução Aplicada**:
 
-- Melhorado tratamento de erros no código
-- Criado scripts de diagnóstico e reinicialização
-- Adicionado delay antes de tentar conectar
-- Criado configurações alternativas do Milvus
-- **NOVO**: Criado alternativa usando Qdrant (mais leve)
+- Migração completa para Qdrant
+- Configuração otimizada para sistemas com pouca RAM
+- Melhor estabilidade e performance
 
-## Scripts Criados
+## Scripts Disponíveis
 
-### 1. `fix-milvus.sh`
+### 1. `test-qdrant.sh`
 
-Diagnostica problemas de conexão com o Milvus:
-
-```bash
-./fix-milvus.sh
-```
-
-### 2. `restart-milvus.sh`
-
-Reinicia o Milvus e testa a conexão:
-
-```bash
-./restart-milvus.sh
-```
-
-### 3. `reset-milvus.sh` ⭐ **NOVO**
-
-Reset completo do Milvus (remove todos os dados):
-
-```bash
-./reset-milvus.sh
-```
-
-### 4. `test-simple-milvus.sh` ⭐ **NOVO**
-
-Testa configuração alternativa mais simples:
-
-```bash
-./test-simple-milvus.sh
-```
-
-### 5. `test-minimal-milvus.sh` ⭐ **NOVO**
-
-Testa configuração mínima para sistemas com pouca RAM:
-
-```bash
-./test-minimal-milvus.sh
-```
-
-### 6. `test-qdrant.sh` ⭐ **NOVO**
-
-Testa Qdrant como alternativa ao Milvus:
+Testa Qdrant como banco de dados vetorial:
 
 ```bash
 ./test-qdrant.sh
 ```
 
-### 7. `test-milvus.js`
+### 2. `test-qdrant-integration.js`
 
-Testa a conexão com o Milvus via Node.js:
+Teste completo de integração com Qdrant:
 
 ```bash
-node test-milvus.js
+node test-qdrant-integration.js
 ```
 
 ## Passos para Resolver
 
 ### ⚠️ **SISTEMA COM POUCA RAM (3.8GB)**
 
-Seu sistema tem apenas 3.8GB de RAM, o que pode ser insuficiente para o Milvus.
+Seu sistema tem apenas 3.8GB de RAM, o que é adequado para o Qdrant.
 
-### Opção 1: Qdrant (Recomendado para seu sistema)
-
-Qdrant é mais leve e pode funcionar melhor com pouca RAM:
+### Opção 1: Testar Qdrant
 
 ```bash
 ./test-qdrant.sh
 ```
 
-### Opção 2: Milvus Configuração Mínima
-
-Se preferir continuar com Milvus:
+### Opção 2: Testar Integração Completa
 
 ```bash
-./test-minimal-milvus.sh
-```
-
-### Opção 3: Reset Completo do Milvus
-
-Para problemas sérios com Milvus:
-
-```bash
-./reset-milvus.sh
-```
-
-### Opção 4: Configuração Alternativa
-
-Para problemas menores:
-
-```bash
-./test-simple-milvus.sh
+node test-qdrant-integration.js
 ```
 
 ### Passo 2: Verificar se a aplicação está funcionando
@@ -130,39 +68,21 @@ npm run dev
 
 Tente fazer upload de um PDF pequeno (< 1MB) primeiro.
 
-## Configurações Alternativas
+## Configurações
 
-### docker-compose.yml (Atualizada)
+### docker-compose-qdrant.yml
 
-- Versão do Milvus: v2.3.3
-- Limite de memória: 4GB
-- Restart automático
-- Healthcheck melhorado
-
-### docker-compose-simple.yml (Nova)
-
-- Versão do Milvus: v2.2.11 (mais estável)
-- Configuração mais simples
-- Menos recursos necessários
-
-### docker-compose-minimal.yml (Nova) ⭐
-
-- Versão do Milvus: v2.2.11
-- Limite de memória: 1GB
-- Configuração otimizada para pouca RAM
-
-### docker-compose-qdrant.yml (Nova) ⭐
-
-- Qdrant como alternativa ao Milvus
+- Qdrant como banco de dados vetorial
 - Limite de memória: 512MB
+- Porta 6333 (HTTP) e 6334 (gRPC)
 - Mais leve e estável
 
 ## Verificações Importantes
 
 1. **Tamanho do arquivo**: Certifique-se de que o PDF não excede 50MB
-2. **Conexão com Milvus/Qdrant**: Execute os scripts de teste
+2. **Conexão com Qdrant**: Execute os scripts de teste
 3. **Logs**: Monitore os logs da aplicação
-4. **Portas**: Verifique se as portas estão acessíveis
+4. **Portas**: Verifique se a porta 6333 está acessível
 5. **Recursos**: Verifique se há memória suficiente disponível
 
 ## Comandos Úteis
@@ -171,20 +91,17 @@ Tente fazer upload de um PDF pequeno (< 1MB) primeiro.
 # Verificar status do Docker
 docker ps
 
-# Verificar logs
-docker logs milvus
+# Verificar logs do Qdrant
 docker logs qdrant
 
-# Testar conexões
-node test-milvus.js
+# Testar conexão com Qdrant
+node test-qdrant-integration.js
 
 # Configurações específicas
-./test-minimal-milvus.sh  # Para pouca RAM
-./test-qdrant.sh          # Alternativa mais leve
+./test-qdrant.sh
 
 # Verificar portas
-netstat -an | grep 19530  # Milvus
-netstat -an | grep 6333   # Qdrant
+netstat -an | grep 6333
 
 # Verificar recursos do sistema
 free -h
@@ -193,27 +110,18 @@ df -h
 
 ## Troubleshooting
 
-### Se o Milvus não inicializar:
+### Se o Qdrant não inicializar:
 
 1. Verifique se há memória suficiente: `free -h`
 2. Verifique se há espaço em disco: `df -h`
 3. Reinicie o Docker: `sudo systemctl restart docker`
-4. **Tente Qdrant**: `./test-qdrant.sh` (recomendado para seu sistema)
+4. Reinicie o Qdrant: `docker-compose -f docker-compose-qdrant.yml restart`
 
 ### Se ainda houver problemas de conexão:
 
-1. Verifique os logs completos: `docker logs milvus`
+1. Verifique os logs completos: `docker logs qdrant`
 2. Verifique se não há conflitos de porta
-3. **Use Qdrant**: É mais leve e estável para sistemas com pouca RAM
-
-## Migração para Qdrant
-
-Se decidir usar Qdrant:
-
-1. Execute: `./test-qdrant.sh`
-2. Se funcionar, atualize o código para usar Qdrant
-3. O arquivo `src/lib/qdrant.ts` já está criado
-4. Atualize as importações no código para usar Qdrant em vez de Milvus
+3. Teste a integração: `node test-qdrant-integration.js`
 
 ## Configurações Modificadas
 
@@ -225,8 +133,26 @@ Se decidir usar Qdrant:
 
 - Adicionado verificação de tamanho de arquivo
 - Configurado `bodyParser: false`
+- Migrado para usar Qdrant
 
-### src/lib/milvus.ts
+### src/lib/qdrant.ts
 
-- Melhorado tratamento de erros
-- Adicionado delay antes de conectar
+- Cliente Qdrant configurado
+- Funções de inserção e busca
+- Tratamento de erros
+
+## Vantagens do Qdrant
+
+### ✅ Para seu sistema (3.8GB RAM):
+
+- **Memória**: 512MB vs 4GB do Milvus
+- **Estabilidade**: Menos problemas de inicialização
+- **Simplicidade**: Configuração mais simples
+- **Compatibilidade**: Funciona bem com pouca RAM
+
+### ✅ Geral:
+
+- **Performance**: Busca vetorial otimizada
+- **Escalabilidade**: Suporte a milhões de vetores
+- **API**: REST API simples e intuitiva
+- **Documentação**: Excelente documentação

@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import pool from "./database";
-import { searchSimilarChunks } from "./milvus";
+import { searchSimilarChunks } from "./qdrant";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -31,7 +31,7 @@ export class GeminiService {
   async getRelevantChunks(question: string, limit: number = 5): Promise<any[]> {
     // Gerar embedding da pergunta usando o Gemini
     const embedding = await this.model.embedContent(question);
-    // Buscar chunks mais próximos no Milvus
+    // Buscar chunks mais próximos no Qdrant
     const similarChunks = await searchSimilarChunks(embedding, limit);
     return similarChunks;
   }

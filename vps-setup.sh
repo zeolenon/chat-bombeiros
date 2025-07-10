@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "=== CONFIGURAÇÃO PARA VPS ==="
-echo "Este script verifica se o Milvus está rodando e se as conexões estão funcionando"
+echo "Este script verifica se o Qdrant está rodando e se as conexões estão funcionando"
 echo ""
 
 # Verificar se o Docker está rodando
@@ -13,27 +13,27 @@ else
     echo "✓ Docker está rodando"
 fi
 
-# Verificar se o container do Milvus está rodando
+# Verificar se o container do Qdrant está rodando
 echo ""
-echo "2. Verificando container do Milvus..."
-if ! docker ps | grep -q milvus; then
-    echo "✗ Container do Milvus não está rodando"
-    echo "Iniciando container do Milvus..."
-    docker-compose up -d milvus
+echo "2. Verificando container do Qdrant..."
+if ! docker ps | grep -q qdrant; then
+    echo "✗ Container do Qdrant não está rodando"
+    echo "Iniciando container do Qdrant..."
+    docker-compose -f docker-compose-qdrant.yml up -d
     sleep 10
 else
-    echo "✓ Container do Milvus está rodando"
+    echo "✓ Container do Qdrant está rodando"
 fi
 
-# Verificar se a porta 19530 está acessível
+# Verificar se a porta 6333 está acessível
 echo ""
-echo "3. Verificando porta 19530..."
-if netstat -an | grep -q ":19530.*LISTEN"; then
-    echo "✓ Porta 19530 está acessível"
+echo "3. Verificando porta 6333..."
+if netstat -an | grep -q ":6333.*LISTEN"; then
+    echo "✓ Porta 6333 está acessível"
 else
-    echo "✗ Porta 19530 não está acessível"
-    echo "Verificando logs do Milvus..."
-    docker logs milvus --tail 20
+    echo "✗ Porta 6333 não está acessível"
+    echo "Verificando logs do Qdrant..."
+    docker logs qdrant --tail 20
 fi
 
 # Verificar se a pasta uploads existe e tem permissões
@@ -94,7 +94,7 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3002,
-      MILVUS_ADDRESS: 'localhost:19530',
+      QDRANT_URL: 'http://localhost:6333',
       DB_HOST: 'localhost',
       DB_PORT: 5432,
       DB_NAME: 'chat_bombeiros',

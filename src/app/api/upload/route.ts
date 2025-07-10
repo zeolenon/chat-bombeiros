@@ -3,7 +3,7 @@ import { writeFile, mkdir, access } from "fs/promises";
 import { join } from "path";
 import { PDFProcessor } from "@/lib/pdfProcessor";
 import pool from "@/lib/database";
-import { insertChunks } from "@/lib/milvus";
+import { insertChunks } from "@/lib/qdrant";
 
 // Configuração para upload de arquivos grandes
 export const config = {
@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
       console.log(`✓ PDF processado: ${chunks.length} chunks gerados`);
       console.log(`✓ Embeddings gerados: ${embeddings.length}`);
 
-      // Salvar embeddings no Milvus
-      console.log("=== SALVANDO NO MILVUS ===");
+      // Salvar embeddings no Qdrant
+      console.log("=== SALVANDO NO QDRANT ===");
       try {
         await insertChunks(
           chunks.map((chunk, i) => ({
@@ -119,12 +119,12 @@ export async function POST(request: NextRequest) {
             embedding: embeddings[i]?.embedding || [],
           }))
         );
-        console.log("✓ Embeddings salvos no Milvus com sucesso");
-      } catch (milvusError) {
-        console.error("✗ Erro ao salvar no Milvus:", milvusError);
+        console.log("✓ Embeddings salvos no Qdrant com sucesso");
+      } catch (qdrantError) {
+        console.error("✗ Erro ao salvar no Qdrant:", qdrantError);
         return NextResponse.json(
           {
-            error: "Erro ao salvar embeddings no Milvus. Verifique a conexão.",
+            error: "Erro ao salvar embeddings no Qdrant. Verifique a conexão.",
           },
           { status: 500 }
         );

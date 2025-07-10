@@ -1,13 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Trash2, Calendar, AlertCircle } from "lucide-react";
+import {
+  FileText,
+  Trash2,
+  Calendar,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface Document {
   id: number;
   original_name: string;
   filename: string;
   created_at: string;
+  file_size?: number; // Tamanho em bytes
 }
 
 interface DocumentManagerProps {
@@ -62,6 +78,24 @@ export default function DocumentManager({ onRefresh }: DocumentManagerProps) {
     }
   };
 
+  const formatFileSize = (bytes?: number): string => {
+    if (!bytes) return "N/A";
+
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+  };
+
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -76,12 +110,15 @@ export default function DocumentManager({ onRefresh }: DocumentManagerProps) {
         <h3 className="text-lg font-semibold text-gray-900">
           Documentos Carregados
         </h3>
-        <button
+        <Button
           onClick={loadDocuments}
-          className="text-sm text-blue-600 hover:text-blue-700"
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
         >
+          <RefreshCw className="h-4 w-4" />
           Atualizar
-        </button>
+        </Button>
       </div>
 
       {error && (
@@ -98,36 +135,52 @@ export default function DocumentManager({ onRefresh }: DocumentManagerProps) {
           <p className="text-sm">Faça upload de PDFs para começar</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:shadow-sm transition-shadow"
-            >
-              <div className="flex items-center space-x-3">
-                <FileText className="h-8 w-8 text-blue-500" />
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {doc.original_name}
-                  </p>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <Calendar className="h-4 w-4" />
-                    <span>
-                      {new Date(doc.created_at).toLocaleDateString("pt-BR")}
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">#</TableHead>
+                <TableHead>Nome do Arquivo</TableHead>
+                <TableHead>Data de Upload</TableHead>
+                <TableHead>Tamanho</TableHead>
+                <TableHead className="w-[100px] text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents.map((doc, index) => (
+                <TableRow key={doc.id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium">{doc.original_name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span>{formatDate(doc.created_at)}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-600">
+                      {formatFileSize(doc.file_size)}
                     </span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => deleteDocument(doc.id)}
-                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                title="Remover documento"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
-          ))}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      onClick={() => deleteDocument(doc.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

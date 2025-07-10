@@ -204,14 +204,15 @@ export async function POST(request: NextRequest) {
       try {
         const result = await processWithTimeout(
           client.query(
-            `INSERT INTO documents (filename, original_name, content, chunks, embeddings) 
-             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            `INSERT INTO documents (filename, original_name, content, chunks, embeddings, file_size) 
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
             [
               filename,
               file.name,
               content,
               JSON.stringify(chunks),
               JSON.stringify(embeddings),
+              file.size,
             ]
           ),
           60000, // 1 minuto para salvar no banco
@@ -273,7 +274,7 @@ export async function GET() {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        "SELECT id, original_name, filename, created_at FROM documents ORDER BY created_at DESC"
+        "SELECT id, original_name, filename, created_at, file_size FROM documents ORDER BY created_at DESC"
       );
 
       return NextResponse.json({

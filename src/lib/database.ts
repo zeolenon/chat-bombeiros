@@ -43,6 +43,7 @@ export async function initializeDatabase() {
         content TEXT NOT NULL,
         chunks JSONB,
         embeddings JSONB,
+        file_size BIGINT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

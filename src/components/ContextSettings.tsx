@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Edit, Save, X, Plus, Trash2 } from "lucide-react";
+import {
+  Settings,
+  Edit,
+  Save,
+  X,
+  Plus,
+  Trash2,
+  AlertCircle,
+} from "lucide-react";
 
 interface ContextSetting {
   id: number;
@@ -14,6 +22,7 @@ interface ContextSetting {
 export default function ContextSettings() {
   const [settings, setSettings] = useState<ContextSetting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,14 +38,42 @@ export default function ContextSettings() {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/context");
-      const data = await response.json();
+      setError(null);
 
-      if (response.ok) {
-        setSettings(data.settings || []);
+      // Tentar até 3 vezes com delay entre tentativas
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const response = await fetch("/api/context", {
+            signal: AbortSignal.timeout(15000), // 15 segundos timeout
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setSettings(data.settings || []);
+            setError(null);
+            return; // Sucesso, sair do loop
+          } else {
+            const errorData = await response.json();
+            console.error(`Tentativa ${attempt} falhou:`, errorData.error);
+            setError(errorData.error || "Erro ao carregar configurações");
+          }
+        } catch (error) {
+          console.error(`Tentativa ${attempt} falhou:`, error);
+
+          if (attempt < 3) {
+            console.log(`Aguardando 2s antes da próxima tentativa...`);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          } else {
+            setError("Falha ao conectar com o servidor. Tente novamente.");
+          }
+        }
       }
+
+      // Se chegou aqui, todas as tentativas falharam
+      console.error("Todas as tentativas de carregar configurações falharam");
     } catch (error) {
       console.error("Erro ao carregar configurações:", error);
+      setError("Erro inesperado ao carregar configurações");
     } finally {
       setLoading(false);
     }
@@ -133,6 +170,23 @@ export default function ContextSettings() {
           <span>Nova Configuração</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <span className="text-red-700">{error}</span>
+            </div>
+            <button
+              onClick={loadSettings}
+              className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">

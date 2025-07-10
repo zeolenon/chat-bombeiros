@@ -120,13 +120,13 @@ export default function CustomThreadList({
           >
             <Button
               onClick={() => onThreadSelect(thread.id)}
-              className="flex-grow text-start justify-start"
+              className="flex-1 text-start justify-start min-w-0"
               variant="ghost"
             >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              <div className="flex-1 min-w-0">
+              <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="text-sm font-medium truncate">{thread.title}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 truncate">
                   {new Date(thread.updatedAt).toLocaleDateString()}
                 </p>
               </div>
@@ -134,7 +134,7 @@ export default function CustomThreadList({
 
             <Button
               onClick={() => deleteThread(thread.id)}
-              className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+              className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 flex-shrink-0 ml-2"
               variant="ghost"
               size="sm"
             >

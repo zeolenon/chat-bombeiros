@@ -11,6 +11,7 @@
     "update-ai-models": "node update-ai-models.js",
     "check-grok": "node check-grok-config.js",
     "check-grok-db": "node check-grok-db.js",
+    "test-grok": "node test-grok-api.js",
     "setup": "npm install && npm run init-db"
   },
   "dependencies": {

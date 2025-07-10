@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 interface Thread {
   id: string;
   title: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface CustomThreadListProps {
@@ -130,7 +130,18 @@ export default function CustomThreadList({
               <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="text-sm font-medium truncate">{thread.title}</p>
                 <p className="text-xs text-gray-500 truncate">
-                  {new Date(thread.updatedAt).toLocaleDateString()}
+                  {(() => {
+                    const date = new Date(thread.updated_at);
+                    return isNaN(date.getTime())
+                      ? "Data inválida"
+                      : date.toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+                  })()}
                 </p>
               </div>
             </Button>

@@ -166,9 +166,7 @@ export class AIService {
     // Usar API key do banco de dados ou da variável de ambiente
     const apiKey = activeModel?.api_key || process.env.GROK_API_KEY;
     const baseUrl =
-      activeModel?.base_url ||
-      process.env.GROK_BASE_URL ||
-      "https://api.x.ai/v1";
+      activeModel?.base_url || process.env.GROK_BASE_URL || "https://api.x.ai";
 
     console.log(
       "🔍 Debug - API key final:",
@@ -203,39 +201,68 @@ export class AIService {
     const fullPrompt = `${basePrompt}${contextText}${historyText}\n\nPergunta: ${question}\n\nResposta:`;
 
     try {
+      console.log("🔍 Debug - Fazendo requisição para Grok:");
+      console.log("  URL:", `${baseUrl}/v1/chat/completions`);
+      console.log("  Modelo:", activeModel?.model);
+      console.log("  API Key:", apiKey ? "Configurada" : "Não configurada");
+
+      const requestBody = {
+        model: activeModel?.model || "grok-beta",
+        messages: [
+          {
+            role: "system",
+            content: basePrompt,
+          },
+          ...chatHistory,
+          {
+            role: "user",
+            content: `${contextText}\n\nPergunta: ${question}`,
+          },
+        ],
+        max_tokens: 4000,
+        temperature: 0.7,
+      };
+
+      console.log("  Request Body:", JSON.stringify(requestBody, null, 2));
+
       const response = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model: "grok-beta",
-          messages: [
-            {
-              role: "system",
-              content: basePrompt,
-            },
-            ...chatHistory,
-            {
-              role: "user",
-              content: `${contextText}\n\nPergunta: ${question}`,
-            },
-          ],
-          max_tokens: 4000,
-          temperature: 0.7,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log("  Response Status:", response.status);
+      console.log(
+        "  Response Headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (!response.ok) {
-        throw new Error(`Erro na API do Grok: ${response.status}`);
+        const errorText = await response.text();
+        console.log("  Error Response:", errorText);
+        throw new Error(
+          `Erro na API do Grok: ${response.status} - ${errorText}`
+        );
       }
 
       const data = await response.json();
-      return data.choices[0]?.message?.content || "Erro ao gerar resposta";
+      console.log("  Response Data:", JSON.stringify(data, null, 2));
+
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) {
+        console.log("  No content in response");
+        return "Erro: Resposta vazia da API do Grok";
+      }
+
+      return content;
     } catch (error) {
       console.error("Erro ao gerar resposta com Grok:", error);
-      return "Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente.";
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro desconhecido";
+      return `Desculpe, ocorreu um erro ao processar sua pergunta: ${errorMessage}`;
     }
   }
 

@@ -1,0 +1,40 @@
+{
+  "name": "chat-bombeiros",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@langchain/community": "^0.3.48",
+    "@langchain/google-genai": "^0.2.14",
+    "@types/multer": "^2.0.0",
+    "@types/pg": "^8.15.4",
+    "@zilliz/milvus2-sdk-node": "^2.5.12",
+    "faiss-node": "^0.5.1",
+    "langchain": "^0.3.29",
+    "lucide-react": "^0.525.0",
+    "multer": "^2.0.1",
+    "next": "15.3.5",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.16.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.8"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20.19.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

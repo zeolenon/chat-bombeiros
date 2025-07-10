@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DB_NAME=chat_bombeiros
+      - DB_USER=seu_usuario_postgres
+      - DB_PASSWORD=sua_senha_postgres
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - MILVUS_ADDRESS=milvus:19530
+    depends_on:
+      - milvus
+    volumes:
+      - ./uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  milvus:
+    image: milvusdb/milvus:v2.4.0
+    container_name: milvus
+    command: ["milvus", "run", "standalone"]
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    volumes:
+      - milvus_data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  milvus_data:

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Send, Shield, MessageSquare, Plus, Trash2 } from "lucide-react";
 import CustomThreadList from "./CustomThreadList";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -66,13 +67,13 @@ export default function SimpleChat() {
         const newMessages = [
           ...messages,
           {
-            id: Date.now().toString(),
+            id: `user-${Date.now()}`,
             role: "user" as const,
             content: userMessage,
             created_at: new Date().toISOString(),
           },
           {
-            id: (Date.now() + 1).toString(),
+            id: `assistant-${Date.now()}`,
             role: "assistant" as const,
             content: data[0]?.content || "Erro ao gerar resposta",
             created_at: new Date().toISOString(),
@@ -161,9 +162,58 @@ export default function SimpleChat() {
                     <Shield className="h-5 w-5 mt-1 flex-shrink-0 text-red-600" />
                   )}
                   <div className="flex-1">
-                    <p className="text-sm whitespace-pre-wrap">
-                      {message.content}
-                    </p>
+                    {message.role === "assistant" ? (
+                      <ReactMarkdown
+                        className="prose prose-sm max-w-none"
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0">{children}</p>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc list-inside mb-2">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal list-inside mb-2">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="mb-1">{children}</li>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-semibold">
+                              {children}
+                            </strong>
+                          ),
+                          em: ({ children }) => (
+                            <em className="italic">{children}</em>
+                          ),
+                          code: ({ children }) => (
+                            <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">
+                              {children}
+                            </code>
+                          ),
+                          pre: ({ children }) => (
+                            <pre className="bg-gray-100 p-2 rounded text-sm overflow-x-auto">
+                              {children}
+                            </pre>
+                          ),
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-4 border-gray-300 pl-4 italic">
+                              {children}
+                            </blockquote>
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">
+                        {message.content}
+                      </p>
+                    )}
                     <p className="text-xs opacity-70 mt-1">
                       {new Date(message.created_at).toLocaleTimeString()}
                     </p>

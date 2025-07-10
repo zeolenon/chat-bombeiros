@@ -29,6 +29,7 @@
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.0",
     "faiss-node": "^0.5.1",
     "langchain": "^0.1.0",
     "lucide-react": "^0.294.0",

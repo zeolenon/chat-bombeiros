@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Shield, MessageSquare, Plus, Trash2 } from "lucide-react";
+import {
+  Send,
+  Shield,
+  MessageSquare,
+  Plus,
+  Trash2,
+  Edit,
+  Save,
+  X,
+} from "lucide-react";
 import CustomThreadList from "./CustomThreadList";
 import ReactMarkdown from "react-markdown";
 
@@ -13,31 +22,73 @@ interface Message {
   created_at: string;
 }
 
+interface ChatInfo {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function SimpleChat() {
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
 
   // Carregar mensagens quando uma thread é selecionada
   const loadMessages = async (threadId: string) => {
     try {
-      const response = await fetch(`/api/chat?chatId=${threadId}`);
+      setIsLoading(true);
+      const response = await fetch(`/api/chat?chatId=${threadId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (response.ok && data.messages) {
+      if (data.messages) {
         setMessages(data.messages);
+      } else {
+        setMessages([]);
       }
     } catch (error) {
       console.error("Erro ao carregar mensagens:", error);
+      setMessages([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Carregar informações do chat
+  const loadChatInfo = async (threadId: string) => {
+    try {
+      const response = await fetch(`/api/chats/${threadId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setChatInfo(data.chat);
+        setEditingTitle(data.chat.title);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar informações do chat:", error);
     }
   };
 
   useEffect(() => {
     if (currentThreadId) {
       loadMessages(currentThreadId);
+      loadChatInfo(currentThreadId);
     } else {
       setMessages([]);
+      setChatInfo(null);
     }
   }, [currentThreadId]);
 
@@ -60,9 +111,13 @@ export default function SimpleChat() {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (response.ok) {
+      if (data && data.length > 0) {
         // Atualizar mensagens
         const newMessages = [
           ...messages,
@@ -88,6 +143,17 @@ export default function SimpleChat() {
       }
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
+      // Adicionar mensagem de erro para o usuário
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          role: "assistant" as const,
+          content:
+            "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
+          created_at: new Date().toISOString(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +164,46 @@ export default function SimpleChat() {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleTitleEdit = async () => {
+    if (!currentThreadId || !editingTitle.trim()) return;
+
+    try {
+      const response = await fetch(`/api/chats/${currentThreadId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: editingTitle.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setChatInfo(data.chat);
+        setIsEditingTitle(false);
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar título:", error);
+    }
+  };
+
+  const cancelTitleEdit = () => {
+    setIsEditingTitle(false);
+    setEditingTitle(chatInfo?.title || "");
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -118,13 +224,61 @@ export default function SimpleChat() {
       <div className="flex flex-col bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4">
-          <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-red-600" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">CBM-RN Chat</h1>
-              <p className="text-sm text-gray-600">
-                Assistente de Normas e Resoluções
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Shield className="h-8 w-8 text-red-600" />
+              <div>
+                {isEditingTitle ? (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          handleTitleEdit();
+                        } else if (e.key === "Escape") {
+                          cancelTitleEdit();
+                        }
+                      }}
+                      className="text-xl font-bold text-gray-900 bg-transparent border-b border-blue-500 focus:outline-none focus:border-blue-600"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleTitleEdit}
+                      className="p-1 text-green-600 hover:text-green-700"
+                    >
+                      <Save className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={cancelTitleEdit}
+                      className="p-1 text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <h1
+                      className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600"
+                      onClick={() => setIsEditingTitle(true)}
+                    >
+                      {chatInfo?.title || "CBM-RN Chat"}
+                    </h1>
+                    <button
+                      onClick={() => setIsEditingTitle(true)}
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                {chatInfo && (
+                  <p className="text-sm text-gray-600">
+                    Criado em {formatDate(chatInfo.created_at)}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -21,9 +21,9 @@ export interface AIModelConfig {
   name: string;
   provider: string;
   model: AIModel;
-  isActive: boolean;
-  apiKey?: string;
-  baseUrl?: string;
+  is_active: boolean;
+  api_key?: string;
+  base_url?: string;
 }
 
 export class AIService {
@@ -152,8 +152,34 @@ export class AIService {
     contextChunks: any[] = []
   ): Promise<string> {
     const activeModel = await this.getActiveModel();
-    if (!activeModel?.apiKey) {
-      throw new Error("API key do Grok não configurada");
+
+    console.log("🔍 Debug - Modelo ativo:", activeModel);
+    console.log(
+      "🔍 Debug - API key do banco:",
+      activeModel?.api_key ? "Configurada" : "Não configurada"
+    );
+    console.log(
+      "🔍 Debug - API key do env:",
+      process.env.GROK_API_KEY ? "Configurada" : "Não configurada"
+    );
+
+    // Usar API key do banco de dados ou da variável de ambiente
+    const apiKey = activeModel?.api_key || process.env.GROK_API_KEY;
+    const baseUrl =
+      activeModel?.base_url ||
+      process.env.GROK_BASE_URL ||
+      "https://api.x.ai/v1";
+
+    console.log(
+      "🔍 Debug - API key final:",
+      apiKey ? "Configurada" : "Não configurada"
+    );
+    console.log("🔍 Debug - Base URL:", baseUrl);
+
+    if (!apiKey) {
+      throw new Error(
+        "API key do Grok não configurada. Configure no banco de dados ou na variável de ambiente GROK_API_KEY"
+      );
     }
 
     const contextSettings = await this.getContextSettings();
@@ -177,32 +203,29 @@ export class AIService {
     const fullPrompt = `${basePrompt}${contextText}${historyText}\n\nPergunta: ${question}\n\nResposta:`;
 
     try {
-      const response = await fetch(
-        `${activeModel.baseUrl}/v1/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${activeModel.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "grok-beta",
-            messages: [
-              {
-                role: "system",
-                content: basePrompt,
-              },
-              ...chatHistory,
-              {
-                role: "user",
-                content: `${contextText}\n\nPergunta: ${question}`,
-              },
-            ],
-            max_tokens: 4000,
-            temperature: 0.7,
-          }),
-        }
-      );
+      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "grok-beta",
+          messages: [
+            {
+              role: "system",
+              content: basePrompt,
+            },
+            ...chatHistory,
+            {
+              role: "user",
+              content: `${contextText}\n\nPergunta: ${question}`,
+            },
+          ],
+          max_tokens: 4000,
+          temperature: 0.7,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error(`Erro na API do Grok: ${response.status}`);

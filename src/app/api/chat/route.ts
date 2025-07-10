@@ -133,6 +133,19 @@ export async function GET(request: NextRequest) {
     const client = await pool.connect();
     try {
       if (chatId) {
+        // Verificar se o chat existe
+        const chatExists = await client.query(
+          "SELECT id FROM chats WHERE id = $1",
+          [chatId]
+        );
+
+        if (chatExists.rows.length === 0) {
+          return NextResponse.json(
+            { error: "Chat não encontrado" },
+            { status: 404 }
+          );
+        }
+
         // Buscar mensagens de um chat específico
         const result = await client.query(
           "SELECT role, content, created_at FROM messages WHERE chat_id = $1 ORDER BY created_at ASC",

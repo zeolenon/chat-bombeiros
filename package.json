@@ -9,6 +9,8 @@
     "lint": "next lint",
     "init-db": "tsx src/lib/init-db.ts",
     "update-ai-models": "node update-ai-models.js",
+    "check-grok": "node check-grok-config.js",
+    "check-grok-db": "node check-grok-db.js",
     "setup": "npm install && npm run init-db"
   },
   "dependencies": {

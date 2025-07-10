@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import pool from "./database";
 import { searchSimilarChunks } from "./qdrant";
 
@@ -10,10 +11,15 @@ export interface ChatMessage {
 export class GeminiService {
   private genAI: GoogleGenerativeAI;
   private model: any;
+  private embeddings: GoogleGenerativeAIEmbeddings;
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
     this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    this.embeddings = new GoogleGenerativeAIEmbeddings({
+      modelName: "embedding-001",
+      apiKey: process.env.GOOGLE_API_KEY!,
+    });
   }
 
   async getContextSettings() {
@@ -29,8 +35,8 @@ export class GeminiService {
   }
 
   async getRelevantChunks(question: string, limit: number = 5): Promise<any[]> {
-    // Gerar embedding da pergunta usando o Gemini
-    const embedding = await this.model.embedContent(question);
+    // Gerar embedding da pergunta usando o modelo correto para embeddings
+    const embedding = await this.embeddings.embedQuery(question);
     // Buscar chunks mais próximos no Qdrant
     const similarChunks = await searchSimilarChunks(embedding, limit);
     return similarChunks;

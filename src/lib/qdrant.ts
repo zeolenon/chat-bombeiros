@@ -3,7 +3,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 // Configuração do cliente Qdrant
 const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333";
 const COLLECTION_NAME = "document_chunks";
-const VECTOR_DIM = 768; // Dimensão padrão do embedding do Gemini
+const VECTOR_DIM = 768; // Dimensão do embedding-001 do Google
 
 // Verificar se estamos no lado do servidor
 const isServer = typeof window === "undefined";

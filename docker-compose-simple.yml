@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   milvus:
-    image: milvusdb/milvus:v2.3.3
+    image: milvusdb/milvus:v2.2.11
     container_name: milvus
     command: ["milvus", "run", "standalone"]
     ports:
@@ -15,17 +15,8 @@ services:
       - ETCD_DATA_DIR=/var/lib/milvus/etcd
       - ETCD_CONFIG_PATH=/var/lib/milvus/etcd/etcd.conf
       - MINIO_DATA_PATH=/var/lib/milvus/minio
-      - MILVUS_COMMON_STORAGETYPE=local
-      - MILVUS_COMMON_STORAGEPATH=/var/lib/milvus
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
     restart: unless-stopped
-    mem_limit: 4g
-    cpus: 2.0
+    mem_limit: 2g
 
 volumes:
-  milvus_data:
+  milvus_data: 

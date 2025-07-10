@@ -10,27 +10,24 @@ import {
   X,
 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
-import Chat from "@/components/Chat";
 import DocumentManager from "@/components/DocumentManager";
 import ContextSettings from "@/components/ContextSettings";
+import { Assistant } from "./assistant";
 
 type TabType = "chat" | "documents" | "settings";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("chat");
-  const [currentChatId, setCurrentChatId] = useState<number | undefined>();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleUploadSuccess = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  const handleNewChat = (chatId: number) => {
-    setCurrentChatId(chatId);
-  };
-
   const startNewChat = () => {
-    setCurrentChatId(undefined);
+    // Para o assistant-ui, um novo chat é iniciado automaticamente
+    // quando não há chatId ativo
+    window.location.reload();
   };
 
   return (
@@ -109,7 +106,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "chat" && (
           <div className="h-[calc(100vh-200px)]">
-            <Chat chatId={currentChatId} onNewChat={handleNewChat} />
+            <Assistant />
           </div>
         )}
 

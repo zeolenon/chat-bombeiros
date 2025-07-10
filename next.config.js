@@ -2,6 +2,8 @@
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse', 'pg'],
+    // Otimizações para arquivos grandes
+    optimizePackageImports: ['pdf-parse'],
   },
   webpack: (config, { isServer }) => {
     // Configuração para pdf-parse
@@ -27,23 +29,34 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
-  // Configurações para upload de arquivos grandes
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-    responseLimit: '50mb',
+  // Configurações para upload de arquivos grandes no App Router
+  async headers() {
+    return [
+      {
+        source: '/api/upload',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      },
+    ];
   },
-  // Configurações adicionais para timeouts
+  // Configurações para timeouts e limites de tamanho
   serverRuntimeConfig: {
     // Timeout para uploads (5 minutos)
     uploadTimeout: 300000,
-  },
-  // Configurações para melhor performance com arquivos grandes
-  experimental: {
-    serverComponentsExternalPackages: ['pdf-parse', 'pg'],
-    // Otimizações para arquivos grandes
-    optimizePackageImports: ['pdf-parse'],
+    // Tamanho máximo do corpo da requisição (50MB)
+    maxBodySize: '50mb',
   },
 }
 

@@ -5,12 +5,10 @@ import { PDFProcessor } from "@/lib/pdfProcessor";
 import pool from "@/lib/database";
 import { insertChunks } from "@/lib/qdrant";
 
-// Configuração para upload de arquivos grandes
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Configuração para upload de arquivos grandes no App Router
+export const dynamic = "force-dynamic";
+export const maxDuration = 300; // 5 minutos
+export const runtime = "nodejs";
 
 // Função para garantir que a pasta uploads existe e tem permissões
 async function ensureUploadsDirectory() {

@@ -26,9 +26,6 @@ const nextConfig = {
 
     return config;
   },
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
   // Configurações para upload de arquivos grandes no App Router
   async headers() {
     return [

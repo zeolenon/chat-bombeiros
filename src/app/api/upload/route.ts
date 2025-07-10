@@ -30,11 +30,43 @@ async function ensureUploadsDirectory() {
   return uploadDir;
 }
 
+// Função para processar com timeout
+async function processWithTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  operation: string
+): Promise<T> {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(
+        new Error(`Timeout: ${operation} demorou mais de ${timeoutMs / 1000}s`)
+      );
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]);
+}
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     console.log("=== INICIANDO PROCESSO DE UPLOAD ===");
 
-    const formData = await request.formData();
+    // Verificar se a requisição foi cancelada
+    if (request.signal?.aborted) {
+      return NextResponse.json(
+        { error: "Upload cancelado pelo usuário" },
+        { status: 499 }
+      );
+    }
+
+    const formData = await processWithTimeout(
+      request.formData(),
+      60000, // 1 minuto para receber o formData
+      "receber dados do formulário"
+    );
+
     const file = formData.get("file") as File;
 
     if (!file) {
@@ -70,9 +102,14 @@ export async function POST(request: NextRequest) {
     console.log("Verificando pasta uploads...");
     const uploadDir = await ensureUploadsDirectory();
 
-    // Salvar arquivo temporariamente
+    // Salvar arquivo temporariamente com timeout
     console.log("Convertendo arquivo para buffer...");
-    const bytes = await file.arrayBuffer();
+    const bytes = await processWithTimeout(
+      file.arrayBuffer(),
+      120000, // 2 minutos para converter arquivo
+      "converter arquivo para buffer"
+    );
+
     const buffer = Buffer.from(bytes);
     console.log(`Buffer criado: ${buffer.length} bytes`);
 
@@ -81,7 +118,11 @@ export async function POST(request: NextRequest) {
     console.log(`Tentando salvar em: ${filepath}`);
 
     try {
-      await writeFile(filepath, buffer);
+      await processWithTimeout(
+        writeFile(filepath, buffer),
+        30000, // 30 segundos para salvar arquivo
+        "salvar arquivo no disco"
+      );
       console.log(`✓ Arquivo salvo com sucesso em: ${filepath}`);
     } catch (error) {
       console.error("✗ Erro ao salvar arquivo:", error);
@@ -94,37 +135,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Processar PDF
+    // Processar PDF com timeout
     console.log("=== PROCESSANDO PDF ===");
     const processor = new PDFProcessor();
     const documentId = Date.now();
 
     try {
-      const { content, chunks, embeddings } = await processor.processPDF(
-        buffer,
-        documentId
+      const { content, chunks, embeddings } = await processWithTimeout(
+        processor.processPDF(buffer, documentId),
+        300000, // 5 minutos para processar PDF
+        "processar PDF"
       );
+
       console.log(`✓ PDF processado: ${chunks.length} chunks gerados`);
       console.log(`✓ Embeddings gerados: ${embeddings.length}`);
 
-      // Salvar embeddings no Qdrant
+      // Salvar embeddings no Qdrant com retry
       console.log("=== SALVANDO NO QDRANT ===");
-      try {
-        await insertChunks(
-          chunks.map((chunk, i) => ({
-            id: chunk.id,
-            documentId: chunk.metadata.documentId,
-            chunkIndex: chunk.metadata.chunkIndex,
-            content: chunk.content,
-            embedding: embeddings[i]?.embedding || [],
-          }))
-        );
-        console.log("✓ Embeddings salvos no Qdrant com sucesso");
-      } catch (qdrantError) {
-        console.error("✗ Erro ao salvar no Qdrant:", qdrantError);
+      let qdrantSuccess = false;
+      let qdrantError: any = null;
+
+      // Tentar até 3 vezes com delay entre tentativas
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await processWithTimeout(
+            insertChunks(
+              chunks.map((chunk, i) => ({
+                id: chunk.id,
+                documentId: chunk.metadata.documentId,
+                chunkIndex: chunk.metadata.chunkIndex,
+                content: chunk.content,
+                embedding: embeddings[i]?.embedding || [],
+              }))
+            ),
+            120000, // 2 minutos para salvar no Qdrant
+            "salvar no Qdrant"
+          );
+
+          console.log("✓ Embeddings salvos no Qdrant com sucesso");
+          qdrantSuccess = true;
+          break;
+        } catch (error) {
+          qdrantError = error;
+          console.error(
+            `✗ Tentativa ${attempt} falhou ao salvar no Qdrant:`,
+            error
+          );
+
+          if (attempt < 3) {
+            console.log(`Aguardando 2s antes da próxima tentativa...`);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
+        }
+      }
+
+      if (!qdrantSuccess) {
+        console.error("✗ Todas as tentativas de salvar no Qdrant falharam");
         return NextResponse.json(
           {
             error: "Erro ao salvar embeddings no Qdrant. Verifique a conexão.",
+            details: qdrantError?.message || "Erro desconhecido",
           },
           { status: 500 }
         );
@@ -134,25 +204,33 @@ export async function POST(request: NextRequest) {
       console.log("=== SALVANDO NO BANCO DE DADOS ===");
       const client = await pool.connect();
       try {
-        const result = await client.query(
-          `INSERT INTO documents (filename, original_name, content, chunks, embeddings) 
-           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-          [
-            filename,
-            file.name,
-            content,
-            JSON.stringify(chunks),
-            JSON.stringify(embeddings),
-          ]
+        const result = await processWithTimeout(
+          client.query(
+            `INSERT INTO documents (filename, original_name, content, chunks, embeddings) 
+             VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            [
+              filename,
+              file.name,
+              content,
+              JSON.stringify(chunks),
+              JSON.stringify(embeddings),
+            ]
+          ),
+          60000, // 1 minuto para salvar no banco
+          "salvar no banco de dados"
         );
 
         console.log("✓ Documento salvo com sucesso no banco de dados");
+
+        const totalTime = Date.now() - startTime;
+        console.log(`✓ Upload concluído em ${totalTime}ms`);
 
         return NextResponse.json({
           success: true,
           documentId: result.rows[0].id,
           filename: file.name,
           chunksCount: chunks.length,
+          processingTime: totalTime,
           message: "Documento processado e salvo com sucesso",
         });
       } finally {
@@ -161,16 +239,34 @@ export async function POST(request: NextRequest) {
     } catch (pdfError) {
       console.error("✗ Erro ao processar PDF:", pdfError);
       return NextResponse.json(
-        { error: "Erro ao processar PDF" },
+        {
+          error: "Erro ao processar PDF",
+          details:
+            pdfError instanceof Error ? pdfError.message : "Erro desconhecido",
+        },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error("✗ Erro geral no upload:", error);
-    return NextResponse.json(
-      { error: "Erro ao processar o arquivo" },
-      { status: 500 }
-    );
+
+    let errorMessage = "Erro ao processar o arquivo";
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      if (error.message.includes("Timeout")) {
+        errorMessage =
+          "Processamento demorou muito. Tente com um arquivo menor.";
+        statusCode = 408;
+      } else if (error.message.includes("cancelado")) {
+        errorMessage = "Upload cancelado pelo usuário";
+        statusCode = 499;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }
 

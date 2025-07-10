@@ -70,7 +70,7 @@ export async function ensureCollection() {
 
 export async function insertChunks(
   chunks: Array<{
-    id: string;
+    id: number;
     documentId: number;
     chunkIndex: number;
     content: string;

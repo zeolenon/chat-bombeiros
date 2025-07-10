@@ -34,6 +34,17 @@ const nextConfig = {
     },
     responseLimit: '50mb',
   },
+  // Configurações adicionais para timeouts
+  serverRuntimeConfig: {
+    // Timeout para uploads (5 minutos)
+    uploadTimeout: 300000,
+  },
+  // Configurações para melhor performance com arquivos grandes
+  experimental: {
+    serverComponentsExternalPackages: ['pdf-parse', 'pg'],
+    // Otimizações para arquivos grandes
+    optimizePackageImports: ['pdf-parse'],
+  },
 }
 
 module.exports = nextConfig 

@@ -3,7 +3,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 
 export interface DocumentChunk {
-  id: string;
+  id: number;
   content: string;
   metadata: {
     documentId: number;
@@ -14,7 +14,7 @@ export interface DocumentChunk {
 }
 
 export interface DocumentEmbedding {
-  id: string;
+  id: number;
   embedding: number[];
   metadata: {
     documentId: number;
@@ -54,7 +54,7 @@ export class PDFProcessor {
     const chunks = await splitter.splitText(text);
 
     return chunks.map((chunk, index) => ({
-      id: `${documentId}_${index}`,
+      id: documentId * 1000 + index,
       content: chunk,
       metadata: {
         documentId,

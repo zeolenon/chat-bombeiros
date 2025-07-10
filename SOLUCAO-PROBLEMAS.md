@@ -22,6 +22,7 @@
 - Criado scripts de diagnóstico e reinicialização
 - Adicionado delay antes de tentar conectar
 - Criado configurações alternativas do Milvus
+- **NOVO**: Criado alternativa usando Qdrant (mais leve)
 
 ## Scripts Criados
 
@@ -41,7 +42,7 @@ Reinicia o Milvus e testa a conexão:
 ./restart-milvus.sh
 ```
 
-### 3. `reset-milvus.sh`
+### 3. `reset-milvus.sh` ⭐ **NOVO**
 
 Reset completo do Milvus (remove todos os dados):
 
@@ -49,7 +50,7 @@ Reset completo do Milvus (remove todos os dados):
 ./reset-milvus.sh
 ```
 
-### 4. `test-simple-milvus.sh`
+### 4. `test-simple-milvus.sh` ⭐ **NOVO**
 
 Testa configuração alternativa mais simples:
 
@@ -57,7 +58,23 @@ Testa configuração alternativa mais simples:
 ./test-simple-milvus.sh
 ```
 
-### 5. `test-milvus.js`
+### 5. `test-minimal-milvus.sh` ⭐ **NOVO**
+
+Testa configuração mínima para sistemas com pouca RAM:
+
+```bash
+./test-minimal-milvus.sh
+```
+
+### 6. `test-qdrant.sh` ⭐ **NOVO**
+
+Testa Qdrant como alternativa ao Milvus:
+
+```bash
+./test-qdrant.sh
+```
+
+### 7. `test-milvus.js`
 
 Testa a conexão com o Milvus via Node.js:
 
@@ -67,30 +84,40 @@ node test-milvus.js
 
 ## Passos para Resolver
 
-### Opção 1: Reset Completo (Recomendado)
+### ⚠️ **SISTEMA COM POUCA RAM (3.8GB)**
 
-Se o Milvus está com problemas sérios:
+Seu sistema tem apenas 3.8GB de RAM, o que pode ser insuficiente para o Milvus.
+
+### Opção 1: Qdrant (Recomendado para seu sistema)
+
+Qdrant é mais leve e pode funcionar melhor com pouca RAM:
+
+```bash
+./test-qdrant.sh
+```
+
+### Opção 2: Milvus Configuração Mínima
+
+Se preferir continuar com Milvus:
+
+```bash
+./test-minimal-milvus.sh
+```
+
+### Opção 3: Reset Completo do Milvus
+
+Para problemas sérios com Milvus:
 
 ```bash
 ./reset-milvus.sh
 ```
 
-**ATENÇÃO**: Isso vai remover todos os dados do Milvus!
-
-### Opção 2: Configuração Alternativa
-
-Se o reset não funcionar, tente a configuração mais simples:
-
-```bash
-./test-simple-milvus.sh
-```
-
-### Opção 3: Reinicialização Normal
+### Opção 4: Configuração Alternativa
 
 Para problemas menores:
 
 ```bash
-./restart-milvus.sh
+./test-simple-milvus.sh
 ```
 
 ### Passo 2: Verificar se a aplicação está funcionando
@@ -118,12 +145,24 @@ Tente fazer upload de um PDF pequeno (< 1MB) primeiro.
 - Configuração mais simples
 - Menos recursos necessários
 
+### docker-compose-minimal.yml (Nova) ⭐
+
+- Versão do Milvus: v2.2.11
+- Limite de memória: 1GB
+- Configuração otimizada para pouca RAM
+
+### docker-compose-qdrant.yml (Nova) ⭐
+
+- Qdrant como alternativa ao Milvus
+- Limite de memória: 512MB
+- Mais leve e estável
+
 ## Verificações Importantes
 
 1. **Tamanho do arquivo**: Certifique-se de que o PDF não excede 50MB
-2. **Conexão com Milvus**: Execute `./fix-milvus.sh` para diagnosticar
-3. **Logs**: Monitore os logs da aplicação e do Milvus
-4. **Portas**: Verifique se as portas 19530 e 9091 estão acessíveis
+2. **Conexão com Milvus/Qdrant**: Execute os scripts de teste
+3. **Logs**: Monitore os logs da aplicação
+4. **Portas**: Verifique se as portas estão acessíveis
 5. **Recursos**: Verifique se há memória suficiente disponível
 
 ## Comandos Úteis
@@ -132,21 +171,20 @@ Tente fazer upload de um PDF pequeno (< 1MB) primeiro.
 # Verificar status do Docker
 docker ps
 
-# Verificar logs do Milvus
+# Verificar logs
 docker logs milvus
+docker logs qdrant
 
-# Testar conexão com Milvus
+# Testar conexões
 node test-milvus.js
 
-# Reset completo
-./reset-milvus.sh
-
-# Configuração alternativa
-./test-simple-milvus.sh
+# Configurações específicas
+./test-minimal-milvus.sh  # Para pouca RAM
+./test-qdrant.sh          # Alternativa mais leve
 
 # Verificar portas
-netstat -an | grep 19530
-netstat -an | grep 9091
+netstat -an | grep 19530  # Milvus
+netstat -an | grep 6333   # Qdrant
 
 # Verificar recursos do sistema
 free -h
@@ -160,14 +198,22 @@ df -h
 1. Verifique se há memória suficiente: `free -h`
 2. Verifique se há espaço em disco: `df -h`
 3. Reinicie o Docker: `sudo systemctl restart docker`
-4. Tente a configuração alternativa: `./test-simple-milvus.sh`
+4. **Tente Qdrant**: `./test-qdrant.sh` (recomendado para seu sistema)
 
 ### Se ainda houver problemas de conexão:
 
 1. Verifique os logs completos: `docker logs milvus`
 2. Verifique se não há conflitos de porta
-3. Tente uma versão ainda mais antiga do Milvus
-4. Considere usar uma alternativa como Qdrant ou Chroma
+3. **Use Qdrant**: É mais leve e estável para sistemas com pouca RAM
+
+## Migração para Qdrant
+
+Se decidir usar Qdrant:
+
+1. Execute: `./test-qdrant.sh`
+2. Se funcionar, atualize o código para usar Qdrant
+3. O arquivo `src/lib/qdrant.ts` já está criado
+4. Atualize as importações no código para usar Qdrant em vez de Milvus
 
 ## Configurações Modificadas
 

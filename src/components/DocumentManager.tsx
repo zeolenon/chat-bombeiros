@@ -7,15 +7,10 @@ import {
   Calendar,
   AlertCircle,
   RefreshCw,
+  ArrowUpDown,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 
 interface Document {
@@ -96,6 +91,80 @@ export default function DocumentManager({ onRefresh }: DocumentManagerProps) {
     });
   };
 
+  // Definição das colunas da tabela
+  const columns: ColumnDef<Document>[] = [
+    {
+      accessorKey: "id",
+      header: "#",
+      cell: ({ row }) => <div className="font-medium">{row.index + 1}</div>,
+    },
+    {
+      accessorKey: "original_name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-auto p-0 font-semibold"
+          >
+            Nome do Arquivo
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-blue-500" />
+          <span className="font-medium">{row.getValue("original_name")}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-auto p-0 font-semibold"
+          >
+            Data de Upload
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-gray-400" />
+          <span>{formatDate(row.getValue("created_at"))}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "file_size",
+      header: "Tamanho",
+      cell: ({ row }) => (
+        <span className="text-sm text-gray-600">
+          {formatFileSize(row.getValue("file_size"))}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Ações",
+      cell: ({ row }) => (
+        <Button
+          onClick={() => deleteDocument(row.original.id)}
+          variant="ghost"
+          size="sm"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -135,53 +204,7 @@ export default function DocumentManager({ onRefresh }: DocumentManagerProps) {
           <p className="text-sm">Faça upload de PDFs para começar</p>
         </div>
       ) : (
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>Nome do Arquivo</TableHead>
-                <TableHead>Data de Upload</TableHead>
-                <TableHead>Tamanho</TableHead>
-                <TableHead className="w-[100px] text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {documents.map((doc, index) => (
-                <TableRow key={doc.id}>
-                  <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-blue-500" />
-                      <span className="font-medium">{doc.original_name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>{formatDate(doc.created_at)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-gray-600">
-                      {formatFileSize(doc.file_size)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      onClick={() => deleteDocument(doc.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable columns={columns} data={documents} />
       )}
     </div>
   );

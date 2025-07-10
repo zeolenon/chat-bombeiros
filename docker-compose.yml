@@ -1,25 +1,6 @@
 version: "3.8"
 
 services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DB_HOST=host.docker.internal
-      - DB_PORT=5432
-      - DB_NAME=chat_bombeiros
-      - DB_USER=seu_usuario_postgres
-      - DB_PASSWORD=sua_senha_postgres
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - MILVUS_ADDRESS=milvus:19530
-    depends_on:
-      - milvus
-    volumes:
-      - ./uploads:/app/uploads
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
   milvus:
     image: milvusdb/milvus:v2.4.0
     container_name: milvus
@@ -34,6 +15,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    environment:
+      - ETCD_USE_EMBED=true
+      - ETCD_DATA_DIR=/var/lib/milvus/etcd
+      - ETCD_CONFIG_PATH=/var/lib/milvus/etcd/etcd.conf
+      - MINIO_DATA_PATH=/var/lib/milvus/minio
 
 volumes:
   milvus_data:

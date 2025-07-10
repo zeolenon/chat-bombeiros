@@ -5,11 +5,19 @@ const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333";
 const COLLECTION_NAME = "document_chunks";
 const VECTOR_DIM = 768; // Dimensão padrão do embedding do Gemini
 
-// Cliente Qdrant
-export const qdrant = new QdrantClient({ url: QDRANT_URL });
+// Verificar se estamos no lado do servidor
+const isServer = typeof window === "undefined";
+
+// Cliente Qdrant - apenas no servidor
+export const qdrant = isServer ? new QdrantClient({ url: QDRANT_URL }) : null;
 
 // Função para verificar se o Qdrant está disponível
 export async function checkQdrantConnection() {
+  if (!qdrant) {
+    console.error("Qdrant client não está disponível no lado do cliente");
+    return false;
+  }
+
   try {
     console.log("Verificando conexão com Qdrant...");
     console.log(`Tentando conectar em: ${QDRANT_URL}`);
@@ -24,6 +32,10 @@ export async function checkQdrantConnection() {
 }
 
 export async function ensureCollection() {
+  if (!qdrant) {
+    throw new Error("Qdrant client não está disponível no lado do cliente");
+  }
+
   try {
     // Verificar conexão primeiro
     const isConnected = await checkQdrantConnection();
@@ -65,6 +77,10 @@ export async function insertChunks(
     embedding: number[];
   }>
 ) {
+  if (!qdrant) {
+    throw new Error("Qdrant client não está disponível no lado do cliente");
+  }
+
   try {
     console.log(`Inserindo ${chunks.length} chunks no Qdrant`);
 
@@ -101,6 +117,10 @@ export async function insertChunks(
 }
 
 export async function searchSimilarChunks(embedding: number[], topK = 5) {
+  if (!qdrant) {
+    throw new Error("Qdrant client não está disponível no lado do cliente");
+  }
+
   try {
     await ensureCollection();
 

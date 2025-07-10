@@ -3,10 +3,25 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse', 'pg'],
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
+    // Configuração para pdf-parse
     config.externals.push({
       'pdf-parse': 'commonjs pdf-parse',
     });
+
+    // Configuração para undici - excluir do processamento do webpack
+    if (isServer) {
+      config.externals.push({
+        'undici': 'commonjs undici',
+      });
+    }
+
+    // Configuração para evitar processamento do undici
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      undici: false,
+    };
+
     return config;
   },
   env: {

@@ -4,7 +4,25 @@ import pool from "@/lib/database";
 
 export async function POST(request: NextRequest) {
   try {
-    const { question, chatId } = await request.json();
+    const body = await request.json();
+
+    // O assistant-ui pode enviar dados em diferentes formatos
+    let messages, question, chatId;
+
+    if (body.messages && Array.isArray(body.messages)) {
+      // Formato do assistant-ui
+      messages = body.messages;
+      question = messages[messages.length - 1]?.content || "";
+      chatId = body.threadId || body.chatId || null;
+    } else {
+      // Formato legado
+      question = body.question;
+      chatId = body.chatId;
+    }
+
+    console.log("=== PROCESSANDO PERGUNTA ===");
+    console.log("Pergunta:", question);
+    console.log("Chat ID:", chatId);
 
     if (!question) {
       return NextResponse.json(
@@ -26,6 +44,7 @@ export async function POST(request: NextRequest) {
           [question.substring(0, 50) + "..."]
         );
         currentChatId = chatResult.rows[0].id;
+        console.log("Novo chat criado:", currentChatId);
       }
 
       // Buscar histórico do chat
@@ -39,15 +58,31 @@ export async function POST(request: NextRequest) {
         content: row.content,
       }));
 
+      console.log("Histórico do chat:", chatHistory.length, "mensagens");
+
       // Buscar chunks relevantes
+      console.log("Buscando chunks relevantes...");
       const relevantChunks = await geminiService.getRelevantChunks(question);
+      console.log("Chunks encontrados:", relevantChunks.length);
+
+      if (relevantChunks.length > 0) {
+        console.log(
+          "Primeiro chunk:",
+          relevantChunks[0].content.substring(0, 100) + "..."
+        );
+      } else {
+        console.log("⚠️  Nenhum chunk relevante encontrado");
+      }
 
       // Gerar resposta
+      console.log("Gerando resposta...");
       const response = await geminiService.generateResponse(
         question,
         chatHistory,
         relevantChunks
       );
+
+      console.log("Resposta gerada:", response.length, "caracteres");
 
       // Salvar mensagem do usuário
       await client.query(
@@ -67,14 +102,17 @@ export async function POST(request: NextRequest) {
         [currentChatId]
       );
 
-      return NextResponse.json({
-        chatId: currentChatId,
-        response,
-        relevantDocuments: relevantChunks.map((chunk) => ({
-          id: chunk.id,
-          filename: chunk.original_name,
-        })),
-      });
+      console.log("=== RESPOSTA ENVIADA ===");
+
+      // Retornar no formato esperado pelo assistant-ui
+      return NextResponse.json([
+        {
+          id: currentChatId,
+          role: "assistant",
+          content: response,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
     } finally {
       client.release();
     }

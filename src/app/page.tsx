@@ -12,7 +12,7 @@ import {
 import FileUpload from "@/components/FileUpload";
 import DocumentManager from "@/components/DocumentManager";
 import ContextSettings from "@/components/ContextSettings";
-import { Assistant } from "./assistant";
+import HybridAssistant from "@/components/HybridAssistant";
 
 type TabType = "chat" | "documents" | "settings";
 
@@ -106,7 +106,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "chat" && (
           <div className="h-[calc(100vh-200px)]">
-            <Assistant />
+            <HybridAssistant />
           </div>
         )}
 

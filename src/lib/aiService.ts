@@ -8,7 +8,13 @@ export interface ChatMessage {
   content: string;
 }
 
-export type AIModel = "gemini-1.5-pro" | "gemini-1.5-flash" | "grok-beta";
+export type AIModel =
+  | "gemini-1.5-pro"
+  | "gemini-1.5-flash"
+  | "grok-beta"
+  | "grok-4"
+  | "grok-1"
+  | "grok-2";
 
 export interface AIModelConfig {
   id: string;
@@ -235,7 +241,7 @@ export class AIService {
         chatHistory,
         contextChunks
       );
-    } else if (activeModel.model === "grok-beta") {
+    } else if (activeModel.model.startsWith("grok")) {
       return this.generateResponseWithGrok(
         question,
         chatHistory,

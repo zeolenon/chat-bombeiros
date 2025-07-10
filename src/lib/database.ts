@@ -90,7 +90,10 @@ export async function initializeDatabase() {
       VALUES 
         ('Gemini 1.5 Pro', 'Google', 'gemini-1.5-pro', true),
         ('Gemini 1.5 Flash', 'Google', 'gemini-1.5-flash', false),
-        ('Grok Beta', 'xAI', 'grok-beta', false)
+        ('Grok Beta', 'xAI', 'grok-beta', false),
+        ('Grok-4', 'xAI', 'grok-4', false),
+        ('Grok-1', 'xAI', 'grok-1', false),
+        ('Grok-2', 'xAI', 'grok-2', false)
       ON CONFLICT DO NOTHING
     `);
   } finally {
